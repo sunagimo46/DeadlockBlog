@@ -58,6 +58,23 @@ draft: false
 - Reddit: https://www.reddit.com/r/DeadlockTheGame/
 - YouTube チャンネル: Eidorian, Deathy, MastYT, Midknighttxt, poshypop
 
+## ローカル字幕ベース記事作成ルール
+
+`transcripts/*.md` ファイルが渡された場合:
+
+- ファイルの「## 字幕テキスト」セクションを参考情報として活用する
+- YouTube字幕特有のノイズ（フィラーワード、重複表現）は除去して情報を整理する
+- 字幕テキストのみでは不足する情報はDeadlock Wikiで補完する
+- フロントマターの `category` と `hero` はユーザーに確認するか、内容から推測して設定する
+- 参考元のYouTube URLは記事末尾「## 参考リンク」セクションに記載する
+- 動画の元タイトルを参考に、日本語の記事タイトルを考案する
+
+**字幕ファイルの取得方法:**
+```bash
+cd scripts
+python fetch_transcript.py --url https://www.youtube.com/watch?v=xxx
+```
+
 ## リサーチベース記事作成ルール
 
 Issueに「リサーチ結果」コメントがある場合:

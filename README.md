@@ -128,6 +128,29 @@ GitHub の Issue テンプレート **「記事作成リクエスト」** を使
 > | `reddit.com/r/.../comments/...` | 投稿タイトル + 本文 | 1,000 文字 |
 > | `deadlock.wiki/wiki/...` | ページの Wikitext | 2,000 文字 |
 
+### 方法 4: ローカル字幕取得 → Claude Code で記事生成
+
+GitHub Actions を使わずにローカルで完結する方法です。YouTube字幕の取得が GitHub Actions 環境で難しい場合に有効です。
+
+1. **字幕をローカルに保存**
+
+```bash
+cd scripts
+python fetch_transcript.py --url https://www.youtube.com/watch?v=xxxx
+```
+
+実行すると `transcripts/YYYYMMDD-{動画ID}.md` に字幕ファイルが保存されます。
+
+2. **Claude Code で記事を作成**
+
+Claude Code（このターミナル）に以下のように依頼します。
+
+```
+transcripts/20260301-abc123.md の字幕をもとにDeadlock攻略記事を作成してください
+```
+
+Claude Code が字幕テキストを読み込んで `src/data/blog/` に記事ファイルを生成します。
+
 ### 方法 3: リサーチ → 記事生成（2ステップ）
 
 詳細な参考情報が必要な場合は、リサーチを先に実行します。
@@ -190,6 +213,11 @@ python research.py --topic "Viscous攻略" --keywords "Viscous guide,build" --is
 cd scripts
 python fetch_references.py --issue-number 123 --dry-run
 
+# YouTube 字幕をローカルファイルに保存
+cd scripts
+python fetch_transcript.py --url https://www.youtube.com/watch?v=xxxx
+# → transcripts/YYYYMMDD-{動画ID}.md に保存される
+
 # テスト実行
 python -m pytest scripts/tests/ -v
 ```
@@ -209,10 +237,12 @@ Deadlock攻略ブログ/
 │   └── ISSUE_TEMPLATE/
 │       ├── article-request.md  # 記事作成リクエスト用テンプレート
 │       └── research-request.md # リサーチリクエスト用テンプレート
+├── transcripts/                 # ローカル字幕ファイル（gitignore 対象）
 ├── scripts/
 │   ├── collect.py               # データ収集メインスクリプト
 │   ├── research.py              # トピックリサーチスクリプト（research-request 用）
 │   ├── fetch_references.py      # 参考URLコンテンツ取得スクリプト（article-request 用）
+│   ├── fetch_transcript.py      # YouTube字幕ローカル取得スクリプト（方法4用）
 │   ├── generate_article.py      # Claude API 記事生成スクリプト
 │   ├── sources/
 │   │   ├── youtube.py           # YouTube RSS 取得・字幕取得
@@ -274,6 +304,22 @@ GitHub Actions（自動）
 
 ユーザー
   → PR をレビュー → マージ → Netlify が自動デプロイ
+```
+
+**ローカル字幕から記事生成（方法 4）:**
+```
+ユーザー（ローカルで実行）
+  → python scripts/fetch_transcript.py --url https://youtu.be/xxx
+  → transcripts/YYYYMMDD-{動画ID}.md に字幕保存
+
+ユーザー（Claude Code に依頼）
+  → 「transcripts/xxxx.md の字幕をもとに記事を書いて」
+
+Claude Code（自動）
+  → src/data/blog/ に記事ファイルを生成
+
+ユーザー
+  → 記事を確認・修正 → git push → Netlify が自動デプロイ
 ```
 
 ---

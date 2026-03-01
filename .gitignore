@@ -29,3 +29,6 @@ __pycache__/
 
 # VS Code
 .vscode/
+
+# 字幕ファイル（ローカル作業ファイル）
+transcripts/
