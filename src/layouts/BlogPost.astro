@@ -1,0 +1,65 @@
+---
+import Layout from "./Layout.astro"
+import type { CollectionEntry } from "astro:content"
+
+interface Props {
+  entry: CollectionEntry<"blog">
+}
+
+const { entry } = Astro.props
+const { title, description, pubDate, updatedDate, tags, category, hero } =
+  entry.data
+
+const categoryLabels: Record<string, string> = {
+  "hero-guide": "ヒーロー攻略",
+  "patch-notes": "パッチノート",
+  meta: "メタ考察",
+  "item-guide": "アイテムガイド",
+  tips: "Tips",
+}
+
+const formattedPubDate = pubDate.toLocaleDateString("ja-JP", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+})
+---
+
+<Layout title={title} description={description}>
+  <article class="max-w-3xl mx-auto">
+    <header class="mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-xs font-semibold text-accent">
+          {categoryLabels[category] ?? category}
+        </span>
+        <time
+          class="text-xs text-text-muted"
+          datetime={pubDate.toISOString()}
+        >
+          {formattedPubDate}
+        </time>
+        {
+          updatedDate && (
+            <span class="text-xs text-text-muted">
+              （更新: {updatedDate.toLocaleDateString("ja-JP")}）
+            </span>
+          )
+        }
+      </div>
+      <h1 class="text-3xl font-bold mb-4">{title}</h1>
+      {hero && <p class="text-text-secondary">関連ヒーロー: {hero}</p>}
+      <div class="flex flex-wrap gap-2 mt-4">
+        {
+          tags.map((tag) => (
+            <span class="text-xs bg-accent-subtle text-accent px-2 py-1 rounded">
+              {tag}
+            </span>
+          ))
+        }
+      </div>
+    </header>
+    <div class="prose max-w-none">
+      <slot />
+    </div>
+  </article>
+</Layout>

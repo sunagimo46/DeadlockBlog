@@ -1,0 +1,52 @@
+---
+import Layout from "../../layouts/Layout.astro"
+import BlogCard from "../../components/BlogCard.astro"
+import { getCollection } from "astro:content"
+
+const allPosts = await getCollection("blog", ({ data }) => {
+  return import.meta.env.PROD ? data.draft !== true : true
+})
+
+const sortedPosts = allPosts.sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+)
+
+const categories = [
+  { value: "all", label: "すべて" },
+  { value: "hero-guide", label: "ヒーロー攻略" },
+  { value: "patch-notes", label: "パッチノート" },
+  { value: "meta", label: "メタ考察" },
+  { value: "item-guide", label: "アイテムガイド" },
+  { value: "tips", label: "Tips" },
+]
+---
+
+<Layout title="記事一覧">
+  <h1 class="text-3xl font-bold mb-8">記事一覧</h1>
+
+  <div class="flex flex-wrap gap-2 mb-8">
+    {
+      categories.map((cat) => (
+        <span class="px-3 py-1 text-sm rounded-full border border-border text-text-secondary hover:border-accent hover:text-accent cursor-pointer transition-colors">
+          {cat.label}
+        </span>
+      ))
+    }
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {
+      sortedPosts.map((post) => (
+        <BlogCard
+          id={post.id}
+          title={post.data.title}
+          description={post.data.description}
+          pubDate={post.data.pubDate}
+          category={post.data.category}
+          tags={post.data.tags}
+          hero={post.data.hero}
+        />
+      ))
+    }
+  </div>
+</Layout>

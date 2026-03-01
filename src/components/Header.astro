@@ -1,0 +1,31 @@
+---
+const navItems = [
+  { label: "ホーム", href: "/" },
+  { label: "記事一覧", href: "/blog" },
+]
+---
+
+<header class="border-b border-border bg-bg-secondary">
+  <nav class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <a
+      href="/"
+      class="text-xl font-bold text-accent hover:text-accent-hover transition-colors"
+    >
+      Deadlock攻略
+    </a>
+    <ul class="flex gap-6">
+      {
+        navItems.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class="text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
