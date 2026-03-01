@@ -9,9 +9,11 @@ interface Props {
   category: string
   tags: string[]
   hero?: string
+  readingTime?: number
 }
 
-const { id, title, description, pubDate, category, tags } = Astro.props
+const { id, title, description, pubDate, category, tags, readingTime } =
+  Astro.props
 
 const formattedDate = pubDate.toLocaleDateString("ja-JP", {
   year: "numeric",
@@ -33,6 +35,7 @@ const formattedDate = pubDate.toLocaleDateString("ja-JP", {
       <time class="text-xs text-text-muted" datetime={pubDate.toISOString()}>
         {formattedDate}
       </time>
+      {readingTime && <span class="text-xs text-text-muted">約{readingTime}分</span>}
     </div>
     <h2
       class="text-lg font-bold text-text-primary mb-2 hover:text-accent transition-colors"

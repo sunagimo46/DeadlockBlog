@@ -32,6 +32,10 @@
   --font-sans: "Noto Sans JP Variable", system-ui, sans-serif;
 }
 
+details summary::-webkit-details-marker {
+  display: none;
+}
+
 @layer base {
   body {
     background-color: var(--color-bg-primary);

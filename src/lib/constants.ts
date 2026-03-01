@@ -37,6 +37,9 @@ export const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   tips: "初心者から上級者まで使えるテクニックやコツの紹介",
 }
 
+/** 1ページあたりの記事数 */
+export const POSTS_PER_PAGE = 12
+
 /** サイト共通定数 */
 export const SITE_URL = "https://deadlock-guide.netlify.app"
 export const SITE_NAME = "Deadlock攻略ブログ"

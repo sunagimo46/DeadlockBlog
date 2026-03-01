@@ -1,15 +1,26 @@
 ---
-import Layout from "../../layouts/Layout.astro"
-import BlogCard from "../../components/BlogCard.astro"
-import { getPublishedPosts, sortPostsByDate } from "../../lib/posts"
-import { ALL_CATEGORIES, CATEGORY_LABELS, POSTS_PER_PAGE } from "../../lib/constants"
-import Pagination from "../../components/Pagination.astro"
-import { calculateReadingTime } from "../../lib/reading-time"
+import Layout from "../../../layouts/Layout.astro"
+import BlogCard from "../../../components/BlogCard.astro"
+import Pagination from "../../../components/Pagination.astro"
+import { getPublishedPosts, sortPostsByDate } from "../../../lib/posts"
+import { ALL_CATEGORIES, CATEGORY_LABELS, POSTS_PER_PAGE } from "../../../lib/constants"
+import { calculateReadingTime } from "../../../lib/reading-time"
 
+export async function getStaticPaths() {
+  const allPosts = await getPublishedPosts()
+  const totalPages = Math.ceil(allPosts.length / POSTS_PER_PAGE)
+
+  return Array.from({ length: totalPages - 1 }, (_, i) => ({
+    params: { page: String(i + 2) },
+  }))
+}
+
+const page = Number(Astro.params.page)
 const allPosts = await getPublishedPosts()
 const sortedPosts = sortPostsByDate(allPosts)
-const pagedPosts = sortedPosts.slice(0, POSTS_PER_PAGE)
 const totalPages = Math.ceil(sortedPosts.length / POSTS_PER_PAGE)
+const start = (page - 1) * POSTS_PER_PAGE
+const pagedPosts = sortedPosts.slice(start, start + POSTS_PER_PAGE)
 
 const categories = [
   { value: "all" as const, label: "すべて" },
@@ -17,7 +28,7 @@ const categories = [
 ]
 ---
 
-<Layout title="記事一覧">
+<Layout title={`記事一覧 - ページ${page}`}>
   <h1 class="text-3xl font-bold mb-8">記事一覧</h1>
 
   <div class="flex flex-wrap gap-2 mb-8">
@@ -50,5 +61,5 @@ const categories = [
     }
   </div>
 
-  <Pagination currentPage={1} lastPage={totalPages} baseUrl="/blog" />
+  <Pagination currentPage={page} lastPage={totalPages} baseUrl="/blog" />
 </Layout>

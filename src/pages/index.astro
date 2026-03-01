@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro"
 import BlogCard from "../components/BlogCard.astro"
 import { getPublishedPosts, sortPostsByDate } from "../lib/posts"
+import { calculateReadingTime } from "../lib/reading-time"
 
 const allPosts = await getPublishedPosts()
 const recentPosts = sortPostsByDate(allPosts).slice(0, 6)
@@ -40,6 +41,7 @@ const recentPosts = sortPostsByDate(allPosts).slice(0, 6)
             category={post.data.category}
             tags={post.data.tags}
             hero={post.data.hero}
+            readingTime={post.body ? calculateReadingTime(post.body) : undefined}
           />
         ))
       }

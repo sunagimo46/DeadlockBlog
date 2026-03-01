@@ -1,0 +1,83 @@
+---
+import Layout from "../../../../layouts/Layout.astro"
+import BlogCard from "../../../../components/BlogCard.astro"
+import Breadcrumb from "../../../../components/Breadcrumb.astro"
+import Pagination from "../../../../components/Pagination.astro"
+import { getPublishedPosts, sortPostsByDate } from "../../../../lib/posts"
+import { calculateReadingTime } from "../../../../lib/reading-time"
+import {
+  ALL_CATEGORIES,
+  CATEGORY_LABELS,
+  CATEGORY_DESCRIPTIONS,
+  SITE_NAME,
+  POSTS_PER_PAGE,
+} from "../../../../lib/constants"
+
+export async function getStaticPaths() {
+  const allPosts = await getPublishedPosts()
+
+  return ALL_CATEGORIES.flatMap((category) => {
+    const filteredPosts = allPosts.filter(
+      (post) => post.data.category === category,
+    )
+    const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE)
+
+    return Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => ({
+      params: { category, page: String(i + 2) },
+    }))
+  })
+}
+
+const { category, page: pageParam } = Astro.params
+const page = Number(pageParam)
+const categoryLabel = CATEGORY_LABELS[category] ?? category
+const categoryDescription = CATEGORY_DESCRIPTIONS[category] ?? ""
+
+const allPosts = await getPublishedPosts()
+const sortedPosts = sortPostsByDate(
+  allPosts.filter((post) => post.data.category === category),
+)
+const totalPages = Math.ceil(sortedPosts.length / POSTS_PER_PAGE)
+const start = (page - 1) * POSTS_PER_PAGE
+const pagedPosts = sortedPosts.slice(start, start + POSTS_PER_PAGE)
+---
+
+<Layout
+  title={`${categoryLabel}の記事一覧 - ページ${page}`}
+  description={`${SITE_NAME}の${categoryLabel}カテゴリの記事一覧。${categoryDescription}`}
+>
+  <Breadcrumb
+    items={[
+      { name: "ホーム", href: "/" },
+      { name: "記事一覧", href: "/blog" },
+      { name: categoryLabel, href: `/blog/category/${category}` },
+      { name: `ページ${page}` },
+    ]}
+  />
+
+  <h1 class="text-3xl font-bold mb-4">{categoryLabel}</h1>
+  <p class="text-text-secondary mb-8">{categoryDescription}</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {
+      pagedPosts.map((post) => (
+        <BlogCard
+          id={post.id}
+          title={post.data.title}
+          description={post.data.description}
+          pubDate={post.data.pubDate}
+          category={post.data.category}
+          tags={post.data.tags}
+          hero={post.data.hero}
+          readingTime={post.body ? calculateReadingTime(post.body) : undefined}
+        />
+      ))
+    }
+  </div>
+
+  <Pagination
+    currentPage={page}
+    lastPage={totalPages}
+    baseUrl={`/blog/category/${category}`}
+  />
+</Layout>

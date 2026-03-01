@@ -2,14 +2,26 @@
 import Layout from "./Layout.astro"
 import Breadcrumb from "../components/Breadcrumb.astro"
 import BlogPostJsonLd from "../components/BlogPostJsonLd.astro"
-import { CATEGORY_LABELS } from "../lib/constants"
+import TableOfContents from "../components/TableOfContents.astro"
+import ShareButtons from "../components/ShareButtons.astro"
+import RelatedPosts from "../components/RelatedPosts.astro"
+import { CATEGORY_LABELS, SITE_URL } from "../lib/constants"
 import type { CollectionEntry } from "astro:content"
+
+interface Heading {
+  depth: number
+  slug: string
+  text: string
+}
 
 interface Props {
   entry: CollectionEntry<"blog">
+  headings?: Heading[]
+  readingTime?: number
+  relatedPosts?: CollectionEntry<"blog">[]
 }
 
-const { entry } = Astro.props
+const { entry, headings = [], readingTime, relatedPosts = [] } = Astro.props
 const { title, description, pubDate, updatedDate, tags, category, hero } =
   entry.data
 
@@ -18,12 +30,15 @@ const formattedPubDate = pubDate.toLocaleDateString("ja-JP", {
   month: "long",
   day: "numeric",
 })
+
+const ogImage = `${SITE_URL}/og/${entry.id}.png`
 ---
 
 <Layout
   title={title}
   description={description}
   ogType="article"
+  ogImage={ogImage}
   publishedTime={pubDate.toISOString()}
   modifiedTime={updatedDate?.toISOString()}
   tags={tags}
@@ -67,6 +82,11 @@ const formattedPubDate = pubDate.toLocaleDateString("ja-JP", {
             </span>
           )
         }
+        {
+          readingTime && (
+            <span class="text-xs text-text-muted">約{readingTime}分で読めます</span>
+          )
+        }
       </div>
       <h1 class="text-3xl font-bold mb-4">{title}</h1>
       {hero && <p class="text-text-secondary">関連ヒーロー: {hero}</p>}
@@ -83,8 +103,11 @@ const formattedPubDate = pubDate.toLocaleDateString("ja-JP", {
         }
       </div>
     </header>
+    <TableOfContents headings={headings} />
     <div class="prose max-w-none">
       <slot />
     </div>
+    <ShareButtons url={`${SITE_URL}/blog/${entry.id}`} title={title} />
   </article>
+  <RelatedPosts posts={relatedPosts} />
 </Layout>
