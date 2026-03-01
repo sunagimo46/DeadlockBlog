@@ -35,9 +35,7 @@ draft: false
 |-----------|--------|
 | `hero-guide` | ヒーロー攻略 |
 | `patch-notes` | パッチノート解説 |
-| `meta` | メタ考察 |
-| `item-guide` | アイテムガイド |
-| `tips` | Tips & テクニック |
+| `tactics` | 立ち回り考察 |
 
 ### オプションフィールド
 

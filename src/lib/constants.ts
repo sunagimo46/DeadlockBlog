@@ -2,9 +2,7 @@
 export const ALL_CATEGORIES = [
   "hero-guide",
   "patch-notes",
-  "meta",
-  "item-guide",
-  "tips",
+  "tactics",
 ] as const
 
 /** カテゴリスラッグの型 */
@@ -14,27 +12,21 @@ export type Category = (typeof ALL_CATEGORIES)[number]
 export const CATEGORY_LABELS: Record<Category, string> = {
   "hero-guide": "ヒーロー攻略",
   "patch-notes": "パッチノート",
-  meta: "メタ考察",
-  "item-guide": "アイテムガイド",
-  tips: "Tips",
+  tactics: "立ち回り考察",
 }
 
 /** カテゴリのスラッグ -> カラークラスのマッピング */
 export const CATEGORY_COLORS: Record<Category, string> = {
   "hero-guide": "text-hero-guide",
   "patch-notes": "text-patch-notes",
-  meta: "text-meta",
-  "item-guide": "text-item-guide",
-  tips: "text-tips",
+  tactics: "text-tactics",
 }
 
 /** カテゴリのスラッグ -> 説明文のマッピング */
 export const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   "hero-guide": "各ヒーローの立ち回り、ビルド、スキル解説などの攻略情報",
   "patch-notes": "最新パッチノートの解説と環境変化への影響分析",
-  meta: "現在の環境における最強構成や戦略の考察",
-  "item-guide": "アイテムの効果、購入タイミング、おすすめビルドの解説",
-  tips: "初心者から上級者まで使えるテクニックやコツの紹介",
+  tactics: "立ち回りの基礎から応用まで、勝利につながる戦術・考察を解説",
 }
 
 /** 1ページあたりの記事数 */

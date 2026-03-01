@@ -12,9 +12,7 @@ const blog = defineCollection({
     category: z.enum([
       "hero-guide",
       "patch-notes",
-      "meta",
-      "item-guide",
-      "tips",
+      "tactics",
     ]),
     hero: z.string().optional(),
     draft: z.boolean().default(false),

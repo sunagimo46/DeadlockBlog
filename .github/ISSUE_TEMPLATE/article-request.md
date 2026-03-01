@@ -16,9 +16,7 @@ assignees: ""
 
 - [ ] ヒーロー攻略 (hero-guide)
 - [ ] パッチノート解説 (patch-notes)
-- [ ] メタ考察 (meta)
-- [ ] アイテムガイド (item-guide)
-- [ ] Tips & テクニック (tips)
+- [ ] 立ち回り考察 (tactics)
 
 ## 参考情報
 

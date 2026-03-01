@@ -14,9 +14,7 @@ labels: research-request
 ## カテゴリ
 - [ ] ヒーロー攻略 (hero-guide)
 - [ ] パッチノート解説 (patch-notes)
-- [ ] メタ考察 (meta)
-- [ ] アイテムガイド (item-guide)
-- [ ] Tips & テクニック (tips)
+- [ ] 立ち回り考察 (tactics)
 
 ## 補足
 （その他の要望や方向性）
