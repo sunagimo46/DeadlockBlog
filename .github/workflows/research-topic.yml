@@ -11,7 +11,7 @@ jobs:
     if: |
       (github.event_name == 'issues' && github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'research-request')) ||
       (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'research-request') ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/research') && (contains(github.event.issue.labels.*.name, 'research-request') || contains(github.event.issue.labels.*.name, 'article-request')))
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/research') && contains(github.event.issue.labels.*.name, 'research-request'))
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -51,5 +51,28 @@ jobs:
             --topic "$TOPIC" \
             --keywords "$KEYWORDS" \
             --issue-number ${{ github.event.issue.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  fetch-references:
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/fetch-refs') &&
+      contains(github.event.issue.labels.*.name, 'article-request')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 依存パッケージのインストール
+        run: pip install -r scripts/requirements.txt
+
+      - name: 参考URLコンテンツ取得
+        run: python scripts/fetch_references.py --issue-number ${{ github.event.issue.number }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
