@@ -1,0 +1,52 @@
+---
+import Layout from "../layouts/Layout.astro"
+---
+
+<Layout title="検索">
+  <h1 class="text-3xl font-bold mb-8">記事を検索</h1>
+  <div id="search" class="max-w-2xl"></div>
+
+  <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+  <script src="/pagefind/pagefind-ui.js" is:inline></script>
+  <script is:inline>
+    window.addEventListener("DOMContentLoaded", () => {
+      new PagefindUI({
+        element: "#search",
+        showSubResults: true,
+        translations: {
+          placeholder: "キーワードを入力...",
+          zero_results: "「[SEARCH_TERM]」に一致する記事が見つかりませんでした",
+          many_results: "[COUNT]件の記事が見つかりました",
+          one_result: "1件の記事が見つかりました",
+          searching: "検索中...",
+        },
+      })
+    })
+  </script>
+
+  <style is:global>
+    :root {
+      --pagefind-ui-primary: #c49a6c;
+      --pagefind-ui-text: #e8e6e3;
+      --pagefind-ui-background: #22222e;
+      --pagefind-ui-border: #2e2e3a;
+      --pagefind-ui-tag: #c49a6c33;
+      --pagefind-ui-border-width: 1px;
+      --pagefind-ui-border-radius: 8px;
+      --pagefind-ui-font: "Noto Sans JP Variable", system-ui, sans-serif;
+    }
+
+    .pagefind-ui__search-input {
+      background-color: #1a1a24 !important;
+      color: #e8e6e3 !important;
+    }
+
+    .pagefind-ui__result-link {
+      color: #c49a6c !important;
+    }
+
+    .pagefind-ui__result-excerpt {
+      color: #9ca3af !important;
+    }
+  </style>
+</Layout>
