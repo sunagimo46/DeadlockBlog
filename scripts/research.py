@@ -26,9 +26,11 @@ def format_youtube_section(videos: list[dict]) -> str:
 
     lines = ["### YouTube 関連動画\n"]
     for v in videos:
-        lines.append(
-            f"- **[{v['title']}]({v['url']})** ({v['channel']}, {v['published'][:10]})"
-        )
+        header = f"- **[{v['title']}]({v['url']})** ({v['channel']}, {v['published'][:10]})"
+        lines.append(header)
+        transcript = v.get("transcript", "")
+        if transcript:
+            lines.append(f"  > **字幕（抜粋）**: {transcript}")
     return "\n".join(lines)
 
 
