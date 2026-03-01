@@ -84,3 +84,26 @@ def search_pages(query: str, limit: int = 10) -> list[dict]:
         print(f"[Wiki] 検索に失敗: {e}")
 
     return results
+
+
+def fetch_page_by_url(url: str) -> str:
+    """Deadlock Wiki ページ URL からページ本文を取得する（最大 2000 文字）"""
+    if "deadlock.wiki/wiki/" not in url:
+        return ""
+    try:
+        from urllib.parse import unquote
+        page_title = unquote(url.split("/wiki/")[-1])
+        resp = requests.get(
+            API_URL,
+            params={"action": "parse", "page": page_title, "prop": "wikitext", "format": "json"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        if len(wikitext) > 2000:
+            wikitext = wikitext[:2000] + "…（以下省略）"
+        return wikitext
+    except Exception as e:
+        print(f"[Wiki] ページ取得エラー ({url}): {e}")
+        return ""

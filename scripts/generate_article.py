@@ -23,6 +23,10 @@ import anthropic
 import requests
 import yaml
 
+from sources.youtube import fetch_transcript
+from sources.reddit import fetch_post_by_url
+from sources.wiki import fetch_page_by_url
+
 
 # --- バリデーション ---
 
@@ -104,6 +108,62 @@ def extract_research_comments(comments: list[dict]) -> str:
     return "\n\n---\n\n".join(research_parts)
 
 
+def extract_reference_urls(issue_body: str) -> dict[str, list[str]]:
+    """Issue 本文の「### 参考情報」セクションから URL を抽出して分類する"""
+    result: dict[str, list[str]] = {"youtube": [], "reddit": [], "wiki": [], "other": []}
+
+    # 「### 参考情報」セクションを切り出す
+    if "### 参考情報" not in issue_body:
+        return result
+
+    section = issue_body.split("### 参考情報", 1)[1]
+    # 次の「### 」が出るまでのテキストのみ対象
+    next_section = re.search(r"\n###\s+", section)
+    if next_section:
+        section = section[: next_section.start()]
+
+    # URL を抽出
+    urls = re.findall(r"https?://[^\s\)\]>」。、]+", section)
+
+    for url in urls:
+        if "youtube.com/watch" in url or "youtu.be/" in url:
+            result["youtube"].append(url)
+        elif "reddit.com/r/" in url and "/comments/" in url:
+            result["reddit"].append(url)
+        elif "deadlock.wiki/wiki/" in url:
+            result["wiki"].append(url)
+        else:
+            result["other"].append(url)
+
+    return result
+
+
+def fetch_reference_contents(urls: dict[str, list[str]]) -> str:
+    """各 URL のコンテンツを取得して Markdown 形式で結合する"""
+    parts: list[str] = []
+
+    for url in urls.get("youtube", []):
+        content = fetch_transcript(url)
+        if content:
+            parts.append(f"### YouTube 動画の字幕\n\nURL: {url}\n\n{content}")
+
+    for url in urls.get("reddit", []):
+        content = fetch_post_by_url(url)
+        if content:
+            parts.append(f"### Reddit 投稿\n\nURL: {url}\n\n{content}")
+
+    for url in urls.get("wiki", []):
+        content = fetch_page_by_url(url)
+        if content:
+            parts.append(f"### Deadlock Wiki ページ\n\nURL: {url}\n\n{content}")
+
+    if urls.get("other"):
+        other_urls = "\n".join(f"- {url}" for url in urls["other"])
+        parts.append(f"### その他の参考 URL\n\n{other_urls}")
+
+    return "\n\n---\n\n".join(parts)
+
+
 def build_prompt(
     issue: dict,
     comments: list[dict],
@@ -116,6 +176,11 @@ def build_prompt(
 
     # リサーチ結果コメントを抽出
     research_content = extract_research_comments(comments)
+
+    # Issue 本文の参照 URL からコンテンツを取得
+    print("参照コンテンツを取得中...")
+    reference_urls = extract_reference_urls(issue_body)
+    reference_content = fetch_reference_contents(reference_urls)
 
     # ユーザーの指示コメント（@claude を含む）を収集
     instruction_comments = [
@@ -149,6 +214,14 @@ def build_prompt(
         for i, comment in enumerate(instruction_comments, 1):
             prompt_parts += [f"### 指示 {i}", comment, ""]
 
+    if reference_content:
+        prompt_parts += [
+            "",
+            "## 参照コンテンツ",
+            "",
+            reference_content,
+        ]
+
     if research_content:
         prompt_parts += [
             "",
@@ -156,7 +229,7 @@ def build_prompt(
             "",
             research_content,
         ]
-    else:
+    elif not reference_content:
         prompt_parts += [
             "",
             "## リサーチ結果",

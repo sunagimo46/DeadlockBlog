@@ -106,6 +106,26 @@ GitHub の Issue テンプレート **「記事作成リクエスト」** を使
 3. Issue に `/generate` とコメント
 4. PR が自動作成されるのでレビュー → マージ
 
+> **URL を貼るだけでコンテンツを自動取得**
+>
+> Issue の **「参考情報」** 欄に YouTube・Reddit・Deadlock Wiki の URL を記載すると、
+> `/generate` 実行時に自動でコンテンツ（字幕・投稿本文・Wikiテキスト）が取得され、
+> 記事生成のプロンプトに組み込まれます。
+>
+> ```
+> ### 参考情報
+> https://www.youtube.com/watch?v=xxxx   ← 字幕を自動取得
+> https://www.reddit.com/r/DeadlockTheGame/comments/xxxx/  ← 本文を自動取得
+> https://deadlock.wiki/wiki/McGinnis    ← Wikiテキストを自動取得
+> ```
+>
+> 対応する URL の種類:
+> | URL | 取得内容 | 上限 |
+> |-----|---------|------|
+> | `youtube.com/watch`, `youtu.be/` | 動画の字幕テキスト | 5,000 文字 |
+> | `reddit.com/r/.../comments/...` | 投稿タイトル + 本文 | 1,000 文字 |
+> | `deadlock.wiki/wiki/...` | ページの Wikitext | 2,000 文字 |
+
 ### 方法 3: リサーチ → 記事生成（2ステップ）
 
 詳細な参考情報が必要な場合は、リサーチを先に実行します。
@@ -162,6 +182,9 @@ python scripts/collect.py
 # 特定トピックのリサーチを実行
 cd scripts
 python research.py --topic "Viscous攻略" --keywords "Viscous guide,build" --issue-number 0
+
+# テスト実行
+python -m pytest scripts/tests/ -v
 ```
 
 ---
@@ -184,9 +207,14 @@ Deadlock攻略ブログ/
 │   ├── research.py              # トピックリサーチスクリプト
 │   ├── generate_article.py      # Claude API 記事生成スクリプト
 │   ├── sources/
-│   │   ├── youtube.py           # YouTube RSS 取得
-│   │   ├── reddit.py            # Reddit JSON API 取得
-│   │   └── wiki.py              # MediaWiki API 取得
+│   │   ├── youtube.py           # YouTube RSS 取得・字幕取得
+│   │   ├── reddit.py            # Reddit JSON API 取得・投稿本文取得
+│   │   └── wiki.py              # MediaWiki API 取得・ページ本文取得
+│   ├── tests/
+│   │   ├── test_youtube.py      # youtube.py のテスト
+│   │   ├── test_reddit.py       # reddit.py のテスト
+│   │   ├── test_wiki.py         # wiki.py のテスト
+│   │   └── test_generate_article.py  # generate_article.py のテスト
 │   └── requirements.txt
 └── src/
     ├── content.config.ts        # Content Collections スキーマ

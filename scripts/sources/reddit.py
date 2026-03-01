@@ -77,3 +77,24 @@ def search_posts(
         print(f"[Reddit] 検索に失敗: {e}")
 
     return posts
+
+
+def fetch_post_by_url(url: str) -> str:
+    """Reddit 投稿 URL から本文を取得する（最大 1000 文字）"""
+    if "reddit.com/r/" not in url or "/comments/" not in url:
+        return ""
+    try:
+        json_url = url.rstrip("/") + ".json"
+        resp = requests.get(json_url, headers=HEADERS, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        post = data[0]["data"]["children"][0]["data"]
+        title = post.get("title", "")
+        selftext = post.get("selftext", "")
+        content = f"{title}\n\n{selftext}".strip()
+        if len(content) > 1000:
+            content = content[:1000] + "…（以下省略）"
+        return content
+    except Exception as e:
+        print(f"[Reddit] 投稿取得エラー ({url}): {e}")
+        return ""
