@@ -3,14 +3,13 @@ name: Claude 記事生成
 on:
   issue_comment:
     types: [created]
-  issues:
-    types: [opened, labeled]
 
 jobs:
   generate:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'claude'))
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/generate') &&
+      contains(github.event.issue.labels.*.name, 'article-request')
     runs-on: ubuntu-latest
     permissions:
       contents: write

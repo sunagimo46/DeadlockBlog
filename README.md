@@ -86,13 +86,13 @@ draft: false
 記事生成には `anthropics/claude-code-action` の代わりに Anthropic Python SDK を直接利用しています。
 `scripts/generate_article.py` が Claude API (`claude-sonnet-4-6`) を呼び出して記事を生成します。
 
-### 方法 1: 話題トピック Issue に @claude でコメント
+### 方法 1: 話題トピック Issue に /generate でコメント
 
 毎日 JST 9:00 に GitHub Actions が自動で「本日の話題トピック」Issue を作成します。
 書いてほしいトピックの Issue に以下のようにコメントするだけで記事が生成されます。
 
 ```
-@claude このパッチノートの解説記事を書いて
+/generate
 ```
 
 記事が生成されて PR が自動作成されます。PR をレビューしてマージすると Netlify に自動デプロイされます。
@@ -102,8 +102,8 @@ draft: false
 GitHub の Issue テンプレート **「記事作成リクエスト」** を使って Issue を作成します。
 
 1. GitHub の Issues タブ → **New issue** → **記事作成リクエスト** を選択
-2. トピック・カテゴリ・参考情報を記入して Issue を作成
-3. Issue に `@claude 記事を書いて` とコメント
+2. トピック・カテゴリ・参考情報を記入して Issue を作成（`article-request` ラベルが自動付与）
+3. Issue に `/generate` とコメント
 4. PR が自動作成されるのでレビュー → マージ
 
 ### 方法 3: リサーチ → 記事生成（2ステップ）
@@ -118,7 +118,7 @@ GitHub の Issue テンプレート **「記事作成リクエスト」** を使
 2. **リサーチ結果をもとに記事生成**
    - リサーチ結果が追加されたら同 Issue に以下のようにコメント
    ```
-   @claude この参考情報をもとに記事を書いて
+   /generate
    ```
 
 ---
@@ -128,8 +128,8 @@ GitHub の Issue テンプレート **「記事作成リクエスト」** を使
 | ワークフロー | トリガー | 内容 |
 |-------------|---------|------|
 | `collect-topics.yml` | 毎日 JST 9:00（手動実行も可） | YouTube・Reddit・Wiki から話題トピックを収集し Issue を作成 |
-| `claude.yml` | Issue コメントに `@claude` が含まれる場合、または `claude` ラベルが付いた Issue が作成された場合 | Anthropic Python SDK で記事を生成して PR を作成 |
-| `research-topic.yml` | `research-request` ラベルが付いた Issue が作成された場合 | トピックをリサーチし結果を Issue にコメント |
+| `claude.yml` | `article-request` ラベル付き Issue に `/generate` コメント | Anthropic Python SDK で記事を生成して PR を作成 |
+| `research-topic.yml` | `research-request` ラベルが付いた Issue 作成時、または `/research` コメント | トピックをリサーチし結果を Issue にコメント |
 
 ---
 
@@ -174,7 +174,7 @@ Deadlock攻略ブログ/
 ├── .github/
 │   ├── workflows/
 │   │   ├── collect-topics.yml   # 定期データ収集 → Issue 作成
-│   │   ├── claude.yml           # @claude メンションで記事生成
+│   │   ├── claude.yml           # /generate コメントで記事生成
 │   │   └── research-topic.yml  # トピックリサーチ
 │   └── ISSUE_TEMPLATE/
 │       ├── article-request.md  # 記事作成リクエスト用テンプレート
@@ -208,8 +208,7 @@ Deadlock攻略ブログ/
 
 ユーザー（随時）
   → Issue を確認
-  → 書いてほしいトピックに @claude でコメント
-    例: 「@claude このパッチノートの解説記事を書いて」
+  → 書いてほしいトピックに /generate とコメント
 
 GitHub Actions（自動）
   → generate_article.py が Claude API で記事を生成して PR を作成
