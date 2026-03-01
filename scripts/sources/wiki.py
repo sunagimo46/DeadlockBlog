@@ -88,11 +88,29 @@ def search_pages(query: str, limit: int = 10) -> list[dict]:
 
 def fetch_page_by_url(url: str) -> str:
     """Deadlock Wiki ページ URL からページ本文を取得する（最大 2000 文字）"""
-    if "deadlock.wiki/wiki/" not in url:
+    if "deadlock.wiki" not in url:
         return ""
     try:
         from urllib.parse import unquote
-        page_title = unquote(url.split("/wiki/")[-1])
+
+        # /wiki/ パスから取得（例: https://deadlock.wiki/wiki/McGinnis）
+        if "/wiki/" in url:
+            raw_title = url.split("/wiki/")[-1]
+        else:
+            # /wiki/ なしの場合はパスの末尾をタイトルとして使う
+            raw_title = url.rstrip("/").split("/")[-1]
+
+        # URLフラグメント（#以降）を除去
+        raw_title = raw_title.split("#")[0]
+        # クエリパラメータを除去
+        raw_title = raw_title.split("?")[0]
+
+        page_title = unquote(raw_title)
+        if not page_title:
+            print(f"[Wiki] ページタイトルを取得できません: {url}")
+            return ""
+
+        print(f"  [Wiki] ページ取得中: {page_title}")
         resp = requests.get(
             API_URL,
             params={"action": "parse", "page": page_title, "prop": "wikitext", "format": "json"},
@@ -100,7 +118,16 @@ def fetch_page_by_url(url: str) -> str:
         )
         resp.raise_for_status()
         data = resp.json()
+
+        if "error" in data:
+            print(f"[Wiki] APIエラー ({url}): {data['error'].get('info', data['error'])}")
+            return ""
+
         wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        if not wikitext:
+            print(f"[Wiki] ページ本文が空です: {page_title}")
+            return ""
+
         if len(wikitext) > 2000:
             wikitext = wikitext[:2000] + "…（以下省略）"
         return wikitext

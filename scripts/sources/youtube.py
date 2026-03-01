@@ -37,7 +37,9 @@ def fetch_transcript(video_url: str) -> str:
         return ""
 
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        # youtube-transcript-api 1.0+ はインスタンスメソッド api.list() を使用
+        api = YouTubeTranscriptApi()
+        transcript_list = api.list(video_id)
 
         # 優先言語順に字幕を試みる
         transcript = None
@@ -60,7 +62,11 @@ def fetch_transcript(video_url: str) -> str:
             return ""
 
         snippets = transcript.fetch()
-        full_text = " ".join(s["text"] for s in snippets)
+        # 1.0+ はオブジェクト(snippet.text)、旧版はdict(snippet["text"])を返す
+        def _get_text(s: object) -> str:
+            return s.text if hasattr(s, "text") else s["text"]  # type: ignore[attr-defined]
+
+        full_text = " ".join(_get_text(s) for s in snippets)
 
         # 上限文字数でトリム
         if len(full_text) > TRANSCRIPT_MAX_CHARS:
