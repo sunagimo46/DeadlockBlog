@@ -4,116 +4,103 @@
     cd scripts
     python fetch_transcript.py --url https://www.youtube.com/watch?v=xxx
     python fetch_transcript.py --url https://youtu.be/xxx --output-dir ../transcripts
+
+事前準備:
+    pip install yt-dlp
 """
 
 import argparse
 import io
+import re
+import subprocess
 import sys
-import time
-import xml.etree.ElementTree as ET
+import tempfile
 from datetime import datetime
 from pathlib import Path
-
-import requests
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api._errors import NoTranscriptFound, TranscriptsDisabled
 
 # Windows 環境での文字化け対策
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # scripts/ ディレクトリからの相対インポート
-sys.path.insert(0, str(Path(__file__).parent))
-from sources.youtube import TRANSCRIPT_LANGUAGES, _extract_video_id
+sys.path.insert(0, str(str(Path(__file__).parent)))
+from sources.youtube import _extract_video_id
 
 DEFAULT_OUTPUT_DIR = Path(__file__).parent.parent / "transcripts"
 
 
-def fetch_video_title(video_id: str) -> str:
-    """YouTubeページからog:titleを取得する。失敗時は動画IDを返す"""
+def _parse_vtt(vtt_text: str) -> str:
+    """WebVTT テキストから重複なしの字幕テキストを抽出する"""
+    seen: set[str] = set()
+    result_lines: list[str] = []
+    for line in vtt_text.split("\n"):
+        # タイムスタンプ行・ヘッダー行をスキップ
+        if re.match(r"\d{2}:\d{2}", line):
+            continue
+        if line.startswith(("WEBVTT", "Kind:", "Language:", "NOTE", "align:", "position:")):
+            continue
+        # HTML タグを除去
+        line = re.sub(r"<[^>]+>", "", line).strip()
+        if line and line not in seen:
+            seen.add(line)
+            result_lines.append(line)
+    return " ".join(result_lines)
+
+
+def fetch_transcript(video_url: str) -> tuple[str, str]:
+    """yt-dlp を使って字幕とタイトルを取得する。(title, transcript) を返す"""
     try:
-        response = requests.get(
-            f"https://www.youtube.com/watch?v={video_id}",
-            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
-            timeout=10,
+        subprocess.run(["yt-dlp", "--version"], capture_output=True, check=True)
+    except FileNotFoundError:
+        raise RuntimeError(
+            "yt-dlp が見つかりません。以下のコマンドでインストールしてください:\n"
+            "    pip install yt-dlp"
         )
-        # og:title または meta[name=title] からタイトルを抽出
-        import re
-        match = re.search(r'<meta property="og:title" content="([^"]+)"', response.text)
-        if not match:
-            match = re.search(r'<title>([^<]+)</title>', response.text)
-        if match:
-            title = match.group(1)
-            # YouTubeページの場合 " - YouTube" サフィックスを除去
-            title = re.sub(r"\s*-\s*YouTube\s*$", "", title)
-            return title.strip()
-    except Exception as e:
-        print(f"  タイトル取得に失敗（スキップ）: {e}")
-    return video_id
 
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = subprocess.run(
+            [
+                "yt-dlp",
+                "--write-auto-sub",
+                "--write-sub",
+                "--sub-lang", "en",
+                "--sub-format", "vtt",
+                "--skip-download",
+                "--print", "%(title)s",
+                "-o", f"{tmpdir}/%(id)s",
+                video_url,
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
 
-def fetch_full_transcript(video_id: str, max_retries: int = 2) -> str:
-    """全文字幕を取得する（文字数制限なし）。XMLパースエラー時はリトライする"""
-    last_error: Exception | None = None
+        if result.returncode != 0:
+            raise RuntimeError(f"yt-dlp の実行に失敗しました:\n{result.stderr.strip()}")
 
-    for attempt in range(max_retries + 1):
-        try:
-            api = YouTubeTranscriptApi()
-            transcript_list = api.list(video_id)
+        title = result.stdout.strip().split("\n")[0] or _extract_video_id(video_url) or video_url
 
-            # 優先言語順に字幕を取得
-            transcript = None
-            for lang in TRANSCRIPT_LANGUAGES:
-                try:
-                    transcript = transcript_list.find_transcript([lang])
-                    break
-                except NoTranscriptFound:
-                    continue
+        vtt_files = list(Path(tmpdir).glob("*.vtt"))
+        if not vtt_files:
+            raise RuntimeError(
+                "字幕ファイルが生成されませんでした。\n"
+                "この動画には英語の字幕（手動・自動生成）がない可能性があります。"
+            )
 
-            # 手動字幕がなければ自動生成字幕を試みる
-            if transcript is None:
-                try:
-                    transcript = transcript_list.find_generated_transcript(TRANSCRIPT_LANGUAGES)
-                except NoTranscriptFound:
-                    # それでもなければ最初に見つかるものを使う
-                    transcript = next(iter(transcript_list), None)
-
-            if transcript is None:
-                raise NoTranscriptFound(video_id, TRANSCRIPT_LANGUAGES, [])
-
-            snippets = transcript.fetch()
-
-            def get_text(s: object) -> str:
-                return s.text if hasattr(s, "text") else s["text"]  # type: ignore[attr-defined]
-
-            return " ".join(get_text(s) for s in snippets)
-
-        except ET.ParseError as e:
-            last_error = e
-            if attempt < max_retries:
-                wait = (attempt + 1) * 5
-                print(f"  XMLパースエラー（リトライ {attempt + 1}/{max_retries}、{wait}秒後...）")
-                time.sleep(wait)
-
-    raise RuntimeError(
-        f"YouTubeからのレスポンスのパースに失敗しました（{max_retries + 1}回試行）。\n"
-        "YouTube側のレート制限の可能性があります。しばらく待ってから再実行してください。"
-    ) from last_error
+        transcript = _parse_vtt(vtt_files[0].read_text(encoding="utf-8"))
+        return title, transcript
 
 
 def save_transcript(url: str, output_dir: Path) -> Path:
-    """字幕を取得してMarkdownファイルに保存する。保存したファイルパスを返す"""
+    """字幕を取得して Markdown ファイルに保存する。保存したファイルパスを返す"""
     video_id = _extract_video_id(url)
     if not video_id:
         raise ValueError(f"有効なYouTube URLではありません: {url}")
 
     print(f"動画ID: {video_id}")
-    print("タイトルを取得中...")
-    title = fetch_video_title(video_id)
+    print("字幕を取得中（yt-dlp）...")
+    title, transcript_text = fetch_transcript(url)
     print(f"タイトル: {title}")
-
-    print("字幕を取得中...")
-    transcript_text = fetch_full_transcript(video_id)
     print(f"字幕取得完了: {len(transcript_text)} 文字")
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -138,7 +125,7 @@ def save_transcript(url: str, output_dir: Path) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="YouTube動画の字幕をローカルファイルに保存")
+    parser = argparse.ArgumentParser(description="YouTube動画の字幕をローカルファイルに保存（yt-dlp使用）")
     parser.add_argument("--url", required=True, help="YouTube動画のURL")
     parser.add_argument(
         "--output-dir",
@@ -157,12 +144,6 @@ def main() -> None:
         print(f'  "{output_path.name} の字幕をもとにDeadlock攻略記事を作成してください"')
     except ValueError as e:
         print(f"エラー: {e}", file=sys.stderr)
-        sys.exit(1)
-    except TranscriptsDisabled:
-        print("エラー: この動画は字幕が無効になっています", file=sys.stderr)
-        sys.exit(1)
-    except NoTranscriptFound:
-        print("エラー: 字幕が見つかりませんでした（英語・日本語字幕が存在しない可能性があります）", file=sys.stderr)
         sys.exit(1)
     except RuntimeError as e:
         print(f"エラー: {e}", file=sys.stderr)
