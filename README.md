@@ -102,15 +102,17 @@ draft: false
 GitHub の Issue テンプレート **「記事作成リクエスト」** を使って Issue を作成します。
 
 1. GitHub の Issues タブ → **New issue** → **記事作成リクエスト** を選択
-2. トピック・カテゴリ・参考情報を記入して Issue を作成（`article-request` ラベルが自動付与）
-3. Issue に `/generate` とコメント
-4. PR が自動作成されるのでレビュー → マージ
+2. トピック・カテゴリ・参考情報（URL）を記入して Issue を作成（`article-request` ラベルが自動付与）
+3. Issue に `/fetch-refs` とコメントして参考情報 URL のコンテンツを取得
+4. コンテンツがコメントに追加されたら `/generate` とコメント
+5. PR が自動作成されるのでレビュー → マージ
 
-> **URL を貼るだけでコンテンツを自動取得**
+> **`/fetch-refs` で参考情報URLのコンテンツを取得**
 >
-> Issue の **「参考情報」** 欄に YouTube・Reddit・Deadlock Wiki の URL を記載すると、
-> `/generate` 実行時に自動でコンテンツ（字幕・投稿本文・Wikiテキスト）が取得され、
-> 記事生成のプロンプトに組み込まれます。
+> Issue の **「参考情報」** 欄に YouTube・Reddit・Deadlock Wiki の URL を記載し、
+> `/fetch-refs` を実行するとコンテンツ（字幕・投稿本文・Wikiテキスト）が Issue にコメントされます。
+> その後 `/generate` を実行すると、取得済みコンテンツが記事生成のプロンプトに自動的に組み込まれます。
+> 取得に失敗した場合は `/fetch-refs` を再実行できます。
 >
 > ```
 > ### 参考情報
@@ -149,7 +151,8 @@ GitHub の Issue テンプレート **「記事作成リクエスト」** を使
 |-------------|---------|------|
 | `collect-topics.yml` | 毎日 JST 9:00（手動実行も可） | YouTube・Reddit・Wiki から話題トピックを収集し Issue を作成 |
 | `claude.yml` | `article-request` ラベル付き Issue に `/generate` コメント | Anthropic Python SDK で記事を生成して PR を作成 |
-| `research-topic.yml` | `research-request` ラベルが付いた Issue 作成時、または `/research` コメント | トピックをリサーチし結果を Issue にコメント |
+| `research-topic.yml` (`research` job) | `research-request` ラベルが付いた Issue 作成時、または `/research` コメント | トピックをキーワード検索してリサーチ結果を Issue にコメント |
+| `research-topic.yml` (`fetch-references` job) | `article-request` ラベル付き Issue に `/fetch-refs` コメント | 参考情報 URL からコンテンツを取得して Issue にコメント |
 
 ---
 
@@ -183,6 +186,10 @@ python scripts/collect.py
 cd scripts
 python research.py --topic "Viscous攻略" --keywords "Viscous guide,build" --issue-number 0
 
+# 記事リクエスト Issue の参考URLコンテンツをローカルで確認
+cd scripts
+python fetch_references.py --issue-number 123 --dry-run
+
 # テスト実行
 python -m pytest scripts/tests/ -v
 ```
@@ -204,7 +211,8 @@ Deadlock攻略ブログ/
 │       └── research-request.md # リサーチリクエスト用テンプレート
 ├── scripts/
 │   ├── collect.py               # データ収集メインスクリプト
-│   ├── research.py              # トピックリサーチスクリプト
+│   ├── research.py              # トピックリサーチスクリプト（research-request 用）
+│   ├── fetch_references.py      # 参考URLコンテンツ取得スクリプト（article-request 用）
 │   ├── generate_article.py      # Claude API 記事生成スクリプト
 │   ├── sources/
 │   │   ├── youtube.py           # YouTube RSS 取得・字幕取得
@@ -230,6 +238,7 @@ Deadlock攻略ブログ/
 
 ## 日常の運用フロー
 
+**話題トピックから記事生成（方法 1）:**
 ```
 毎日 JST 9:00（自動）
   → 「本日の話題トピック」Issue が作成される
@@ -244,6 +253,27 @@ GitHub Actions（自動）
 ユーザー（随時）
   → PR をレビュー、必要なら修正依頼
   → マージ → Netlify が自動デプロイ
+```
+
+**記事リクエストから記事生成（方法 2）:**
+```
+ユーザー
+  → 「記事作成リクエスト」Issue を作成（参考情報URLを記載）
+
+ユーザー
+  → /fetch-refs とコメント
+
+GitHub Actions（自動）
+  → fetch_references.py が参考URLのコンテンツを取得してコメント
+
+ユーザー
+  → 内容を確認後、/generate とコメント
+
+GitHub Actions（自動）
+  → generate_article.py が参考コンテンツを活用して記事を生成して PR を作成
+
+ユーザー
+  → PR をレビュー → マージ → Netlify が自動デプロイ
 ```
 
 ---
