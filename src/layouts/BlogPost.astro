@@ -8,6 +8,7 @@ import RelatedPosts from "../components/RelatedPosts.astro"
 import PostNavigation from "../components/PostNavigation.astro"
 import { CATEGORY_LABELS, SITE_URL } from "../lib/constants"
 import type { CollectionEntry } from "astro:content"
+import { getSlug } from "../lib/posts"
 import type { AdjacentPost } from "../lib/posts"
 
 interface Heading {
@@ -42,7 +43,7 @@ const formattedPubDate = pubDate.toLocaleDateString("ja-JP", {
   day: "numeric",
 })
 
-const ogImage = `${SITE_URL}/og/${entry.id}.png`
+const ogImage = `${SITE_URL}/og/${getSlug(entry.id)}.png`
 ---
 
 <Layout
@@ -62,7 +63,7 @@ const ogImage = `${SITE_URL}/og/${entry.id}.png`
     modifiedDate={updatedDate}
     tags={tags}
     category={category}
-    entryId={entry.id}
+    entryId={getSlug(entry.id)}
   />
   <article class="max-w-3xl mx-auto">
     <Breadcrumb
@@ -119,7 +120,7 @@ const ogImage = `${SITE_URL}/og/${entry.id}.png`
     <div class="prose max-w-none">
       <slot />
     </div>
-    <ShareButtons url={`${SITE_URL}/blog/${entry.id}`} title={title} />
+    <ShareButtons url={`${SITE_URL}/blog/${getSlug(entry.id)}`} title={title} />
     <PostNavigation prevPost={prevPost} nextPost={nextPost} />
   </article>
   <RelatedPosts posts={relatedPosts} />

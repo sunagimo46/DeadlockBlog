@@ -1,6 +1,7 @@
 ---
 import BlogCard from "./BlogCard.astro"
 import { calculateReadingTime } from "../lib/reading-time"
+import { getSlug } from "../lib/posts"
 import type { CollectionEntry } from "astro:content"
 
 interface Props {
@@ -14,7 +15,7 @@ const { posts } = Astro.props
   {
     posts.map((post) => (
       <BlogCard
-        id={post.id}
+        slug={getSlug(post.id)}
         title={post.data.title}
         description={post.data.description}
         pubDate={post.data.pubDate}

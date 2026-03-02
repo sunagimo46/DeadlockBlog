@@ -2,8 +2,13 @@ import { getCollection } from "astro:content"
 import type { CollectionEntry } from "astro:content"
 
 export interface AdjacentPost {
-  id: string
+  slug: string
   title: string
+}
+
+/** ファイルパス形式のidからスラッグ（ファイル名部分）を取得する（例: "2026/03/blog-name" → "blog-name"） */
+export function getSlug(id: string): string {
+  return id.split("/").pop() ?? id
 }
 
 /** 公開済み記事のみ取得（開発環境ではdraft記事も含む） */
@@ -40,10 +45,10 @@ export function getAdjacentPosts(
 
   return {
     prev: prevEntry
-      ? { id: prevEntry.id, title: prevEntry.data.title }
+      ? { slug: getSlug(prevEntry.id), title: prevEntry.data.title }
       : undefined,
     next: nextEntry
-      ? { id: nextEntry.id, title: nextEntry.data.title }
+      ? { slug: getSlug(nextEntry.id), title: nextEntry.data.title }
       : undefined,
   }
 }

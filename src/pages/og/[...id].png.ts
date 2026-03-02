@@ -1,6 +1,7 @@
 import type { APIRoute, GetStaticPaths } from "astro"
 import { getCollection } from "astro:content"
 import { generateOgImage } from "../../lib/og-image"
+import { getSlug } from "../../lib/posts"
 import type { Category } from "../../lib/constants"
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -9,7 +10,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   })
 
   return posts.map((post) => ({
-    params: { id: post.id },
+    params: { id: getSlug(post.id) },
     props: { post },
   }))
 }

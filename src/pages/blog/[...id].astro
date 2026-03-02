@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from "astro:content"
 import BlogPost from "../../layouts/BlogPost.astro"
-import { getPublishedPosts, getAdjacentPosts } from "../../lib/posts"
+import { getPublishedPosts, getAdjacentPosts, getSlug } from "../../lib/posts"
 import { getRelatedPosts } from "../../lib/related-posts"
 import { calculateReadingTime } from "../../lib/reading-time"
 
@@ -11,7 +11,7 @@ export async function getStaticPaths() {
   })
 
   return posts.map((post) => ({
-    params: { id: post.id },
+    params: { id: getSlug(post.id) },
     props: { post },
   }))
 }

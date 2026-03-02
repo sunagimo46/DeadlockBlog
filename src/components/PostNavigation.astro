@@ -17,7 +17,7 @@ const { prevPost, nextPost } = Astro.props
     >
       {prevPost ? (
         <a
-          href={`/blog/${prevPost.id}`}
+          href={`/blog/${prevPost.slug}`}
           class="group flex-1 min-w-0 text-left"
         >
           <span class="text-xs text-text-muted group-hover:text-accent transition-colors">
@@ -32,7 +32,7 @@ const { prevPost, nextPost } = Astro.props
       )}
       {nextPost ? (
         <a
-          href={`/blog/${nextPost.id}`}
+          href={`/blog/${nextPost.slug}`}
           class="group flex-1 min-w-0 text-right"
         >
           <span class="text-xs text-text-muted group-hover:text-accent transition-colors">
