@@ -1,8 +1,8 @@
 ---
-import BlogCard from "./BlogCard.astro"
-import { calculateReadingTime } from "../lib/reading-time"
-import { getSlug } from "../lib/posts"
 import type { CollectionEntry } from "astro:content"
+import { getSlug } from "../lib/posts"
+import { calculateReadingTime } from "../lib/reading-time"
+import BlogCard from "./BlogCard.astro"
 
 interface Props {
   posts: CollectionEntry<"blog">[]
@@ -15,7 +15,7 @@ const { posts } = Astro.props
   posts.length > 0 && (
     <section class="mt-12 pt-8 border-t border-border max-w-3xl mx-auto">
       <h2 class="text-2xl font-bold mb-6">関連記事</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {posts.map((post) => (
           <BlogCard
             slug={getSlug(post.id)}
