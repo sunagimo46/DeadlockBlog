@@ -47,27 +47,58 @@ def _parse_vtt(vtt_text: str) -> str:
     return " ".join(result_lines)
 
 
-def fetch_transcript(video_url: str) -> tuple[str, str]:
-    """yt-dlp を使って字幕とタイトルを取得する。(title, transcript) を返す"""
+def _get_ytdlp_cmd() -> list[str]:
+    """yt-dlp の実行コマンドを返す。コマンドが見つからない場合は python -m yt_dlp にフォールバック"""
+    import shutil
+    if shutil.which("yt-dlp"):
+        return ["yt-dlp"]
+    # --user インストール時など PATH に入っていない場合のフォールバック
     try:
-        subprocess.run(["yt-dlp", "--version"], capture_output=True, check=True)
-    except FileNotFoundError:
+        subprocess.run([sys.executable, "-m", "yt_dlp", "--version"], capture_output=True, check=True)
+        return [sys.executable, "-m", "yt_dlp"]
+    except (FileNotFoundError, subprocess.CalledProcessError):
         raise RuntimeError(
             "yt-dlp が見つかりません。以下のコマンドでインストールしてください:\n"
             "    pip install yt-dlp"
         )
 
+
+def fetch_transcript(video_url: str) -> tuple[str, str]:
+    """yt-dlp を使って字幕とタイトルを取得する。(title, transcript) を返す"""
+    ytdlp_cmd = _get_ytdlp_cmd()
+
+    # タイトル取得（字幕ダウンロードとは分離して実行）
+    title_result = subprocess.run(
+        [
+            *ytdlp_cmd,
+            "--skip-download",
+            "--no-write-subs",
+            "--print", "%(title)s",
+            video_url,
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    title = (
+        title_result.stdout.strip().split("\n")[0]
+        if title_result.returncode == 0 and title_result.stdout.strip()
+        else (_extract_video_id(video_url) or video_url)
+    )
+
     with tempfile.TemporaryDirectory() as tmpdir:
-        result = subprocess.run(
+        # Windowsパスのバックスラッシュを forward slash に変換
+        tmpdir_fwd = tmpdir.replace("\\", "/")
+
+        sub_result = subprocess.run(
             [
-                "yt-dlp",
+                *ytdlp_cmd,
                 "--write-auto-sub",
                 "--write-sub",
                 "--sub-lang", "en",
                 "--sub-format", "vtt",
                 "--skip-download",
-                "--print", "%(title)s",
-                "-o", f"{tmpdir}/%(id)s",
+                "-o", f"{tmpdir_fwd}/%(id)s",
                 video_url,
             ],
             capture_output=True,
@@ -75,10 +106,8 @@ def fetch_transcript(video_url: str) -> tuple[str, str]:
             encoding="utf-8",
         )
 
-        if result.returncode != 0:
-            raise RuntimeError(f"yt-dlp の実行に失敗しました:\n{result.stderr.strip()}")
-
-        title = result.stdout.strip().split("\n")[0] or _extract_video_id(video_url) or video_url
+        if sub_result.returncode != 0:
+            raise RuntimeError(f"yt-dlp の実行に失敗しました:\n{sub_result.stderr.strip()}")
 
         vtt_files = list(Path(tmpdir).glob("*.vtt"))
         if not vtt_files:
