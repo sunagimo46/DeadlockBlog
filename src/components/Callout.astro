@@ -1,0 +1,40 @@
+---
+interface Props {
+  type?: "note" | "tip" | "warning" | "important"
+}
+
+const { type = "note" } = Astro.props
+
+const variants = {
+  note: {
+    borderColor: "border-blue-400/60",
+    bg: "bg-blue-500/10",
+  },
+  tip: {
+    borderColor: "border-green-400/60",
+    bg: "bg-green-500/10",
+  },
+  warning: {
+    borderColor: "border-yellow-400/60",
+    bg: "bg-yellow-500/10",
+  },
+  important: {
+    borderColor: "border-accent/60",
+    bg: "bg-accent/10",
+  },
+} as const
+
+const v = variants[type]
+---
+
+<div
+  class:list={[
+    "not-prose my-6 rounded-r-lg border-l-4 px-4 py-3",
+    v.borderColor,
+    v.bg,
+  ]}
+>
+  <div class="text-sm text-text-primary leading-relaxed [&_strong]:font-bold [&_a]:text-accent [&_a:hover]:underline">
+    <slot />
+  </div>
+</div>
