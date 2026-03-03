@@ -55,9 +55,9 @@ Deadlock はSource 2エンジンを採用したシューターであり、移動
 
 | アイテム名 | コスト | 効果 |
 |-----------|--------|------|
-| Extra Stamina | 800 Souls | +1バー、回復速度+12% |
-| Kinetic Dash | 1,600 Souls | +1バー、回復速度+12% |
-| Stamina Mastery | 3,200 Souls | +2バー、回復速度+18%、速度上限約900 u/s |
+| Extra Stamina | 800 ソウル | +1バー、回復速度+12% |
+| Kinetic Dash | 1,600 ソウル | +1バー、回復速度+12% |
+| Stamina Mastery | 3,200 ソウル | +2バー、回復速度+18%、速度上限約900 u/s |
 | Electric Slippers | - | +2バー |
 | Shadow Strike | - | +2バー |
 | Arcane Surge | - | +2バー、回復速度+12% |
