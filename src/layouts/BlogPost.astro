@@ -65,63 +65,74 @@ const ogImage = `${SITE_URL}/og/${getSlug(entry.id)}.png`
     category={category}
     entryId={getSlug(entry.id)}
   />
-  <article class="max-w-3xl mx-auto">
-    <Breadcrumb
-      items={[
-        { name: "ホーム", href: "/" },
-        { name: "記事一覧", href: "/blog" },
-        {
-          name: CATEGORY_LABELS[category] ?? category,
-          href: `/blog/category/${category}`,
-        },
-        { name: title },
-      ]}
-    />
-    <header class="mb-8">
-      <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-semibold text-accent">
-          {CATEGORY_LABELS[category] ?? category}
-        </span>
-        <time
-          class="text-xs text-text-muted"
-          datetime={pubDate.toISOString()}
-        >
-          {formattedPubDate}
-        </time>
-        {
-          updatedDate && (
-            <span class="text-xs text-text-muted">
-              （更新: {updatedDate.toLocaleDateString("ja-JP")}）
-            </span>
-          )
-        }
-        {
-          readingTime && (
-            <span class="text-xs text-text-muted">約{readingTime}分で読めます</span>
-          )
-        }
+  <div class="lg:flex lg:gap-8 lg:items-start">
+    <article class="max-w-3xl mx-auto lg:mx-0 lg:flex-1 lg:min-w-0">
+      <Breadcrumb
+        items={[
+          { name: "ホーム", href: "/" },
+          { name: "記事一覧", href: "/blog" },
+          {
+            name: CATEGORY_LABELS[category] ?? category,
+            href: `/blog/category/${category}`,
+          },
+          { name: title },
+        ]}
+      />
+      <header class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-xs font-semibold text-accent">
+            {CATEGORY_LABELS[category] ?? category}
+          </span>
+          <time
+            class="text-xs text-text-muted"
+            datetime={pubDate.toISOString()}
+          >
+            {formattedPubDate}
+          </time>
+          {
+            updatedDate && (
+              <span class="text-xs text-text-muted">
+                （更新: {updatedDate.toLocaleDateString("ja-JP")}）
+              </span>
+            )
+          }
+          {
+            readingTime && (
+              <span class="text-xs text-text-muted">約{readingTime}分で読めます</span>
+            )
+          }
+        </div>
+        <h1 class="text-3xl font-bold mb-4">{title}</h1>
+        {hero && <p class="text-text-secondary">関連ヒーロー: {hero}</p>}
+        <div class="flex flex-wrap gap-2 mt-4">
+          {
+            tags.map((tag) => (
+              <a
+                href={`/blog/tags/${tag}`}
+                class="text-xs bg-accent-subtle text-accent px-2 py-1 rounded hover:bg-accent hover:text-bg-primary transition-colors"
+              >
+                {tag}
+              </a>
+            ))
+          }
+        </div>
+      </header>
+      <TableOfContents headings={headings} />
+      <div class="prose max-w-none">
+        <slot />
       </div>
-      <h1 class="text-3xl font-bold mb-4">{title}</h1>
-      {hero && <p class="text-text-secondary">関連ヒーロー: {hero}</p>}
-      <div class="flex flex-wrap gap-2 mt-4">
-        {
-          tags.map((tag) => (
-            <a
-              href={`/blog/tags/${tag}`}
-              class="text-xs bg-accent-subtle text-accent px-2 py-1 rounded hover:bg-accent hover:text-bg-primary transition-colors"
-            >
-              {tag}
-            </a>
-          ))
-        }
+      <ShareButtons url={`${SITE_URL}/blog/${getSlug(entry.id)}`} title={title} />
+      <PostNavigation prevPost={prevPost} nextPost={nextPost} />
+      <!-- モバイル時のみ記事下に関連記事を表示 -->
+      <div class="lg:hidden">
+        <RelatedPosts posts={relatedPosts} />
       </div>
-    </header>
-    <TableOfContents headings={headings} />
-    <div class="prose max-w-none">
-      <slot />
-    </div>
-    <ShareButtons url={`${SITE_URL}/blog/${getSlug(entry.id)}`} title={title} />
-    <PostNavigation prevPost={prevPost} nextPost={nextPost} />
-  </article>
-  <RelatedPosts posts={relatedPosts} />
+    </article>
+    <!-- PC時のみ右サイドバーに関連記事を表示 -->
+    {relatedPosts.length > 0 && (
+      <aside class="hidden lg:block lg:w-72 lg:flex-shrink-0 sticky top-4 self-start">
+        <RelatedPosts posts={relatedPosts} sidebar={true} />
+      </aside>
+    )}
+  </div>
 </Layout>

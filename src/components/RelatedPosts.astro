@@ -6,16 +6,23 @@ import BlogCard from "./BlogCard.astro"
 
 interface Props {
   posts: CollectionEntry<"blog">[]
+  sidebar?: boolean
 }
 
-const { posts } = Astro.props
+const { posts, sidebar = false } = Astro.props
 ---
 
 {
   posts.length > 0 && (
-    <section class="mt-12 pt-8 border-t border-border max-w-3xl mx-auto">
-      <h2 class="text-2xl font-bold mb-6">関連記事</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <section
+      class={sidebar
+        ? ""
+        : "mt-12 pt-8 border-t border-border max-w-3xl mx-auto"}
+    >
+      <h2 class={sidebar ? "text-xl font-bold mb-4" : "text-2xl font-bold mb-6"}>
+        関連記事
+      </h2>
+      <div class={sidebar ? "flex flex-col gap-4" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
         {posts.map((post) => (
           <BlogCard
             slug={getSlug(post.id)}
